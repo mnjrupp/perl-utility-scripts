@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.arc path {
+  stroke: #fff;
+}
+.arc:hover{
+	fill: #ace63c;
+}
+
+
+
+</style>
+</head>
+<body>
+<div class="pie-label" id="pie-label"></div>
+<div class="d3pie" id="d3pie"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+<script>
+
+var width = 660,
+    height = 400,
+    radius = Math.min(width, height)/2;
+
+var color = d3.scale.ordinal()
+    .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
+var arc = d3.svg.arc()
+    .outerRadius(radius - 10)
+    .innerRadius(0);
+
+var pie = d3.layout.pie()
+    .sort(null)
+    .value(function(d) { return d.CARD; });
+	
+
+	
+var svg = d3.select(".d3pie").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+	
+
+
+d3.csv("/cgi-bin/get-tablecard-csv.pl", function(error, data) {
+
+  data.forEach(function(d) {
+    d.CARD = +d.CARD;
+  });
+
+  var g = svg.selectAll(".arc")
+      .data(pie(data))
+	  .enter().append("g")
+      .attr("class", "arc");
+      
+
+  g.append("path")
+      .attr("d", arc)
+      .style("fill", function(d) { return color(d.data.TABNAME); })
+      .style("cursor","hand")
+      .on("click", function(d) {
+              var url = "/cgi-bin/mydb2.cgi?do=select&table="+d.data.TABNAME+"&page=1&action=select";
+              window.parent.location = url;
+            });
+
+  g.append("text")
+      .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+      .attr("dy", ".35em")
+      .style("text-anchor", "middle")
+      .text(function(d) { var pct = Math.round((d.data.CARD/d.data.TTLROWS)*100);
+	         if(pct>5){str = d.data.TABNAME+" - " +Math.round((d.data.CARD/d.data.TTLROWS)*100)+"%"}
+               else{str = "";} return str;});
+   g.append("svg:title")
+     .text(function(d){return d.data.TABNAME+" ["+d.data.CARD.toLocaleString()+"] rows";});
+	 
+ d3.select(".pie-label").append("p")
+   .data(pie(data))
+   .append("b")
+   .text(function(d){
+	return "Schema: ";});
+	
+   d3.select("p").append("i")
+   .text(function(d){
+	 return d.data.TABSCHEMA;});
+	 
+  d3.select(".pie-label").append("p")
+   .data(pie(data))
+   .attr("class","p2")
+   .append("b")
+   .text(function(d){
+	return "Total Cardinality: ";});
+	
+   d3.select(".p2").append("i")
+   .text(function(d){
+	 return d.data.TTLROWS.toLocaleString();});
+ 
+});
+
+
+
+</script>
+
+</body>
+</html>
