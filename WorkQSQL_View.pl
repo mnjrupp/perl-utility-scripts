@@ -1,6 +1,7 @@
 use strict;
 use Tkx;
 use Data::Dumper;
+use Win32::UTCFileTime qw(:DEFAULT $ErrStr);
 
 our $VERSION = "1.00";
  (my $progname = $0) =~ s,.*[\\/],,;
@@ -49,7 +50,9 @@ Tkx::option_add("*tearOff", 0);
 # Set up a Context "popup" menu
 my $cmenu = $mw->new_menu();
 #Add some dummy menu items
-foreach ("One", "Two", "Three") {$cmenu->add_command(-label => $_);}
+#foreach ("One", "Two", "Three") {$cmenu->add_command(-label => $_);}
+ $cmenu->add_command(-label =>"edit",-command => \&childdialog);
+ $cmenu->add_command(-label =>"run",-command => \&childdialog);
 if (Tkx::tk_windowingsystem() eq "aqua") {
     $mw->g_bind("<2>", [sub {my($x,$y) = @_; $cmenu->g_tk___popup($x,$y)}, Tkx::Ev("%X", "%Y")] );
     $mw->g_bind("<Control-1>", [sub {my($x,$y) = @_; $cmenu->g_tk___popup($x,$y)}, Tkx::Ev("%X", "%Y")]);
@@ -62,8 +65,30 @@ if (Tkx::tk_windowingsystem() eq "aqua") {
 # The listbox is the only widget we'll need to refer to directly
 # later in our program, so for convenience we'll assign it to a variable.
 # Remember that we must use a Tcl formatted list for listvariable.
-my $cnames = ''; foreach my $i (@filenames) {$cnames = $cnames . ' {' . $i . '}';};
-my $lbox = $content->new_tk__listbox(-listvariable => \$cnames, -height => 5);
+#my $cnames = ''; foreach my $i (@filenames) {$cnames = $cnames . ' {' . $i . '}';};
+ 
+my $tree = $content->new_ttk__treeview();
+$tree->configure(-columns => "size modified", -height => 5,-display => "#all");
+
+$tree->heading("size",-text => "size");
+$tree->heading("modified", -text => "modified");
+
+$tree->column(0, -width => 100, -anchor => "e");
+$tree->column("size", -width => 100, -anchor => "center");
+$tree->column("modified", -width => 100, -anchor => "center");
+
+foreach my $i (@filenames){
+  my $size = (stat("$directory/$i"))[7];
+  my $modd =  localtime((stat("$directory/$i"))[9]);
+  
+  $tree->insert("","end",-text => $i ,-values => "$size $modd");
+  # if(-f "$directory/$i"){
+   # $tree->insert("","end",-values => $i,(stat("$directory/$i"))[2],(stat("$directory/$i"))[4]);
+   # #$tree->insert("modified","end",-text => (stat("$directory/$i"))[4]);
+   # }
+ }
+# $tree->insert("", "end", -text => "Listbox", -values => "15KB Yesterday mark");
+ 
 my $lbl = $content->new_ttk__label(-text => "Send to country's leader:");
 my $g1 = $content->new_ttk__radiobutton(-text => $gifts{'card'}, -variable => \$gift, -value => 'card');
 my $g2 = $content->new_ttk__radiobutton(-text => $gifts{'flowers'}, -variable => \$gift, -value => 'flowers');
@@ -73,7 +98,7 @@ my $l1 = $content->new_ttk__label(-textvariable => \$sentmsg, -anchor => "center
 my $l2 = $content->new_ttk__label(-textvariable => \$statusmsg, -anchor => "w");
 
 # Grid all the widgets
-$lbox->g_grid(-column => 0, -row => 0, -rowspan => 6, -sticky => "nsew");
+$tree->g_grid(-column => 0, -row => 0, -rowspan => 6, -sticky => "nsew");
 $lbl->g_grid(-column => 1, -row => 0, -padx => 10, -pady => 5);
 $g1->g_grid(-column => 1, -row => 1, -sticky => "w", -padx => 20);
 $g2->g_grid(-column => 1, -row => 2, -sticky => "w", -padx => 20);
@@ -84,18 +109,18 @@ $l2->g_grid(-column => 0, -row => 6, -columnspan => 2, -sticky => "we");
 $content->g_grid_columnconfigure(0, -weight => 1);
 $content->g_grid_rowconfigure(0, -weight => 1);
 
-#Set up a scrollbar for the listbox
-(my $s = $mw->new_ttk__scrollbar(-command => [$lbox,"yview"],
-					-orient => "vertical"))->g_grid(-column => 1, -row => 0, -sticky => "ns");
-	$lbox->configure(-yscrollcommand => [$s,"set"]);
+#Set up a scrollbar for the Treeview
+# (my $sv = $content->new_ttk__scrollbar(-command => [$tree,"yview"],
+					# -orient => "vertical"))->g_grid(-column => 0, -row => 0, -sticky => "ns");
+	# #$content->configure(-yscrollcommand => [$sv,"set"]);
 
 # Add sizeGrip	
  ($mw->new_ttk__sizegrip)->g_grid(-column => 999, -row => 999, -sticky => "se");
 
 # Set event bindings for when the selection in the listbox changes,
 # when the user double clicks the list, and when they hit the Return key
-$lbox->g_bind("<<ListboxSelect>>", sub {showPopulation()});
-$lbox->g_bind("<Double-1>", sub {sendGift()});
+$tree->g_bind("<<ListboxSelect>>", sub {showPopulation()});
+$tree->g_bind("<Double-1>", sub {sendGift()});
 $mw->g_bind("<Return>", sub {sendGift()});
 
 # Called when the selection in the listbox changes; figure out
@@ -105,14 +130,14 @@ $mw->g_bind("<Return>", sub {sendGift()});
 # gift being sent, so it doesn't stick around after we start doing
 # other things.
 sub showPopulation {
-    my @idx = $lbox->curselection;
-    if ($#idx==0) {
-        my $code = $countrycodes[$idx[0]];
-        my $name = $filenames[$idx[0]];
-        my $popn = $populations{$code};
-        $statusmsg = "The population of " . $name . "(" . $code . ") is $popn";
-    }
-    $sentmsg = "";
+    # my @idx = $tree->curselection;
+    # if ($#idx==0) {
+        # my $code = $countrycodes[$idx[0]];
+        # my $name = $filenames[$idx[0]];
+        # my $popn = $populations{$code};
+        # $statusmsg = "The population of " . $name . "(" . $code . ") is $popn";
+    # }
+    # $sentmsg = "";
 }
 
 # Called when the user double clicks an item in the listbox, presses
@@ -122,27 +147,27 @@ sub showPopulation {
 # Figure out which country is selected, which gift is selected with the 
 # radiobuttons, "send the gift", and provide feedback that it was sent.
 sub sendGift {
-    my @idx = $lbox->curselection;
-    if ($#idx==0) {
-        $lbox->see($idx[0]);
-        my $name =$filenames[$idx[0]];
-        # Gift sending left as an exercise to the reader
-        $sentmsg = "Sent " . $gifts{$gift} . " to leader of " . $name
-    }     
+    # my @idx = $tree->curselection;
+    # if ($#idx==0) {
+        # $tree->see($idx[0]);
+        # my $name =$filenames[$idx[0]];
+        # # Gift sending left as an exercise to the reader
+        # $sentmsg = "Sent " . $gifts{$gift} . " to leader of " . $name
+    #}     
 }
 
 # Colorize alternating lines of the listbox
-for (my $i=0; $i<=$#filenames; $i+=2) {
-    $lbox->itemconfigure($i, -background => "#f0f0ff");
-}
+# for (my $i=0; $i<=$#filenames; $i+=2) {
+    # $tree->itemconfigure($i, -background => "#f0f0ff");
+# }
 
 # Set the starting state of the interface, including selecting the
 # default gift to send, and clearing the messages.  Select the first
 # country in the list; because the <<ListboxSelect>> event is only
 # generated when the user makes a change, we explicitly call showPopulation.
 
-$lbox->selection_set(0);
-showPopulation;
+#$tree->selection_set(0);
+#showPopulation;
 
 
 Tkx::MainLoop();
@@ -245,5 +270,13 @@ sub mk_menu {
     my $bg = Tkx::tk___chooseColor(-initialcolor => "#ff0000");
 	$mw->configure(-background => $bg);
 	#$content->configure(-style => "clam");
+  
+  }
+  sub childdialog {
+   my $diag =  $mw->new_toplevel;
+   my $m = $diag->new_menu;
+   $diag->configure(-menu =>$m);
+   
+	
   
   }
