@@ -7,7 +7,7 @@ use DBD::ODBC;
 our $DBH = undef;
 
 my $sth = undef;
-my($f,$o,$sqlf,$s,$c,$staticSql,$r,$sql);
+my($f,$o,$sqlf,$s,$c,$staticSql,$r,$sql,$header);
 
 my ($infilecsv,$outfilecsv,$sqlf) = @ARGV;
 
@@ -29,7 +29,13 @@ if (not defined $sqlf or !-e $sqlf) {print "can't open $!\n";&printhelp;}
  }
   #$sql+=chomp; 
   $sql=~s/\n/ /g;
- 
+  #Build header for csv file
+  ($header)= ($sql=~/SELECT\s(.+?)FROM/);
+  $header=~s/DISTINCT//;
+  $header=~s/dbo\.//g;
+  $header=~s/,/\t/g;
+  
+  #print $header."\n";exit;
  $staticSql=$sql;
 
 
@@ -42,6 +48,8 @@ if (not defined $sqlf or !-e $sqlf) {print "can't open $!\n";&printhelp;}
    open($f ,"<",$infilecsv) or die print "can't open '$f' $!\n";
    open($o ,">>",$outfilecsv) or die print "can't open '$o' $!\n";
    
+     print $o $header,"\n";
+	 
    while (my $line = <$f>){
       chomp $line;
 	  #print $line."\n";
@@ -53,7 +61,7 @@ if (not defined $sqlf or !-e $sqlf) {print "can't open $!\n";&printhelp;}
       $sth = &exec_query($staticSql) or return;
 	  my $ref;
 		$ref = $sth->fetchall_arrayref;
-		print "Number of rows returned is ", 0 + @{$ref}, "\n";
+		#print "Number of rows returned is ", 0 + @{$ref}, "\n";
 			foreach $r (@{$ref})
 			{
 			print $o join("\t", @{$r}), "\n";
@@ -75,7 +83,7 @@ sub connect_db{
 	#my $in = shift;
     	my ($db, $username, $password,$data_source);
     	$db='classifieds';
-    	$data_source ='dbi:ODBC:<DSN NAME GOES HERE>';
+    	$data_source ='';
     	$username = '';
     	$password = '';
     	
