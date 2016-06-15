@@ -1,4 +1,4 @@
-
+#!perl -w
 #use strict;
 use Switch;
 use Data::Dumper;
@@ -6,9 +6,15 @@ use Win32::Console;
 use Win32::Console::ANSI;
 use Term::ANSIScreen qw/:color :cursor :screen :constants/;
 use Term::Menu;
+use vars qw(%CONFIG);
 
-my @list = ("1 Item","2 Item","3 Item","4 Run sql file");
+my @list = ("1 Item","2 Item","3 Item","4 Run sql file","5 List sql files");
 
+%CONFIG = (
+            sql_path => ".",
+			sql_ext  => ".sql",
+			);
+			
 my $out = new Win32::Console(STD_OUTPUT_HANDLE) || die;
     $out->Title("Help Menu");
 my $buffer = new Win32::Console() || die;
@@ -39,6 +45,7 @@ LOOP:$buffer->Cls();
 		case 1		{$buffer->Write(&functoid1)}
 		case 2		{$buffer->Write("2 was choosen")}
 		case 4		{&runsql;}
+		case 5		{&getSqlf;}
 		else		{$buffer->Write("$k")}
 	   
 	   }
@@ -75,7 +82,7 @@ LOOP:$buffer->Cls();
  }
  sub menuitems{
     my($x,$y) = $buffer->Cursor();
-	for my $i (1..4){
+	for my $i (1..5){
 	 $buffer->Cursor($x,$y++);
 	 $buffer->Write("$list[$i-1]");
 	 $buffer->Display();
@@ -103,5 +110,18 @@ LOOP:$buffer->Cls();
 		my $file = <STDIN>;
 		chomp($file);
 		return $file;
+ 
+ }
+ sub getSqlf{
+    
+    opendir(my $dh,$CONFIG{'sql_path'}) || die "Can't open dir: $!"; 
+	 my @files = grep{/$CONFIG{'sql_ext'}/} readdir ($dh);
+	 $buffer->Cls();
+	 &header;
+	 foreach (@files){
+	   $buffer->Write("$_ \n");
+	 }
+	 
+ 
  
  }
