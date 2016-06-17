@@ -103,25 +103,60 @@ LOOP:$buffer->Cls();
  }
  
  sub runsql{
+		my $file = shift;
+		# $buffer->Cursor(23,5);
+		# $buffer->Write($file);
 		
+		if(-e $CONFIG{'sql_path'}."/".$file){
+		$buffer->FillChar(" ",50,1,6);
+		 $buffer->Cursor(23,6);
+		 $buffer->Write($file." to run");
+		 do{
+		  local @ARGV;
+		  @ARGV = ($file,"$file\.csv");
+		  #===================================
+		  # the perl script runSQL must be in
+		  # the same directory
+		  #===================================
+		  eval {require "runSQL.pl"};
+		 }
+		}else{
 		$buffer->FillChar(" ",50,1,23);
 		$buffer->Cursor(10,23);
 		$buffer->Write("Enter the sql file > ");
 		my $file = <STDIN>;
 		chomp($file);
+		}
 		return $file;
  
  }
  sub getSqlf{
     
     opendir(my $dh,$CONFIG{'sql_path'}) || die "Can't open dir: $!"; 
-	 my @files = grep{/$CONFIG{'sql_ext'}/} readdir ($dh);
+	 my @files = grep{/$CONFIG{'sql_ext'}$/} readdir ($dh);
 	 $buffer->Cls();
 	 &header;
-	 foreach (@files){
-	   $buffer->Write("$_ \n");
-	 }
+	 my $counter = 1,$x=6,$y=10;
 	 
- 
+	 foreach (@files){
+	  $buffer->Cursor($x,$y++);
+	   $buffer->Write("$counter\. $_ \n");
+	   $counter++;
+	   my ($x2,$y2) = $buffer->Cursor();
+	    if($y2>20){$x=$x+30;$y=10;}
+	 }
+LOOP2:	 $buffer->FillChar(" ",50,1,23);
+	 $buffer->Cursor(10,23);
+	 $buffer->Write("Enter sql# to run > ");
+      while(my $k = <STDIN>){
+		chomp($k);
+		if($k eq 'q'){
+		&exitmenu;
+	    }
+	    if($k eq 'Y' or $k eq 'y'){
+		  goto LOOP;
+		}
+		if($k=~/[0-9]/ and $k>0){&runsql($files[$k-1]);goto LOOP2;}
+	 }
  
  }
