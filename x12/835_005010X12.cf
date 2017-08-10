@@ -1,0 +1,91 @@
+[LOOPS]
+ISA
+GS
+ST
+1000A
+1000B
+2000
+SE
+GE
+IEA
+
+#--- start of loop details ---#
+
+[ISA]
+segment=ISA:::ISA:R:1
+
+[GS]
+segment=GS:::GE:R:1
+
+[ST]
+segment=ST:1:835:Transaction Set Header:R:1
+segment=BPR:::Financial Information:R:1
+segment=TRN:::Reassociation Trace Number:R:1
+segment=CUR:::Foreign Currency Information:S:1
+segment=REF:1:EV:Receiver Identification:S:1
+segment=REF:1:F2:Version Identification:S:1
+segment=DTM:1:405:Production Date:S:1
+
+[1000A]
+segment=N1:1:PR:Payer Identification:R:1
+segment=N3:::Payer Address:R:1
+segment=N4:::Payer City, State, ZIP Code:R:1
+segment=REF:1:2U,EO,HI,NF:Additional Payer Identification:S:4
+segment=PER:1:CX:Payer Contact Information:S:1
+segment=PER:1:BL:Payer Technical Contact Information:R:1
+segment=PER:1:1C:Payer Website:S:1
+
+[1000B]
+segment=N1:1:PE:Payee Identification:R:1
+segment=N3:::Payee Address:S:1
+segment=N4:::Payee City, State, ZIP Code:R:1
+segment=REF:1:TJ:Payee Additional Identification:S:>1
+segment=RDM:::Remittance Delivery Method:S:1
+[2000]
+segment=LX:::Header Number:S:1
+segment=TS3:::Provider Summary Information:S:1
+segment=TS2:::Provider Supplemental Summary Information:S:1
+loop=2100
+
+[2100]
+segment=CLP:6:MA:Claim Payment Information:R:1
+segment=CAS:::Claim Adjustment:S:99
+segment=NM1:1:QC:Patient Name:R:1
+segment=NM1:1:IL:Insured Name:S:1
+segment=NM1:1:74:Corrected Patient/Insured Name:S:1
+segment=NM1:1:82:Service Provider Name:S:1
+segment=NM1:1:TT:Crossover Carrier Name:S:1
+segment=NM1:1:PR:Corrected Priority Payer Name:S:1
+segment=MIA:::Inpatient Adjudication Information:S:1
+segment=MOA:::Outpatient Adjudication Information:S:1
+segment=REF:::Other Claim Related Identification:S:5
+segment=REF:::Rendering Provider Identification:S:10
+segment=DTM:1:050:Statement From or To Date:S:2
+segment=DTM:::Coverage Expiration Date:S:1
+segment=DTM:1:050:Claim Received Date:S:1
+segment=PER:1:CX:Claim Contact Information:S:2
+segment=AMT:::Claim Supplemental Information:S:13
+segment=QTY:::Claim Supplemental Information Quantity:S:14
+loop=2110
+
+[2110]
+segment=SVC:::Service Payment Information:S:1
+segment=DTM:1:472:Service Date:S:2
+segment=CAS:::Service Adjustment:S:99
+segment=REF:1:LU:Service Identification:S:8
+segment=REF:1:HPI:Rendering Provider Information:S:10
+segment=REF:1:OK:Health Care Policy ID:S:5
+segment=AMT:::Service Supplemental Amount:S:9
+segment=QTY:::Service Supplemental Quantity:S:6
+segment=LQ:1:HE:Health Care Remark Codes:S:99
+segment=PLB:::Provider Adjustment:S:>1
+
+[SE]
+segment=SE:::Transaction Set Trailer:R:1
+
+[GE]
+segment=GE:::GE:R:1
+
+[IEA]
+segment=IEA:::IEA:R:1
+
