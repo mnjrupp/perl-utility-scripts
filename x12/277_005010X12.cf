@@ -28,11 +28,17 @@ segment=BHT:::Beginning of Hierarchical Transaction:R:1
 [2000A]
 segment=HL:3:20:Information Source Level:R:1
 loop=2100A
-
+loop=2200A
 #LOOP ID - 2100A PAYER NAME >1
 [2100A]
 segment=NM1:1:PR:Payer Name:R:1
 segment=PER:::Payer Contact Information:S:1
+
+#LOOP ID -2200A RECEIPT INFORMATION
+[2200A] 
+segment=TRN:1:1:Transmission Receipt Control ID:S:1
+segment=DTP:1:050:Information Source Receipt Date:S:1
+segment=DTP:1:009:Information Source Process Date:S:1
 
 #LOOP ID - 2000B INFORMATION RECEIVER LEVEL >1
 [2000B]
@@ -48,25 +54,29 @@ segment=NM1:1:41:Information Receiver Name:R:1
 [2200B]
 segment=TRN:1:2:Information Receiver Trace ID:R:1
 segment=STC:::Status Information:R:1
+segment=QTY:::Total Accepted Quantity:R:1
 
 #LOOP ID - 2000C SERVICE PROVIDER LEVEL >1
 [2000C]
 segment=HL:3:19:Service Provider Level:R:1
 loop=2100C
+loop=2200C
 
 #LOOP ID - 2100C PROVIDER NAME >1
 [2100C]
-segment=NM1:1:1P:Provider Name:R:1
-loop=2200C
+segment=NM1:1:85:Billing Provider Name:R:1
 
 #LOOP ID - 2200C PROVIDER OF SERVICE 1
 [2200C]
 segment=TRN:1:1:Provider Service Trace ID:R:1
 segment=STC:::Status Information:R:1
+segment=REF:::Provider Secondary ID:S:1
+segment=QTY:1:QA,QC:Total Accepted/Rejected Quantity:S:1
+segment=AMT:1:YU,YY:Total Accepted/Rejected Amt:S:1
 
 #LOOP ID - 2000D SUBSCRIBER LEVEL >1
 [2000D]
-segment=HL:3:22:Subscriber Level:R:1
+segment=HL:3:PT,22:Subscriber Level:R:1
 loop=2100D
 loop=2200D
 
@@ -77,10 +87,10 @@ segment=NM1:1:IL,QC:Subscriber Name:R:1
 #LOOP ID - 2200D CLAIM SUBMITTER TRACE NUMBER >1
 [2200D]
 segment=TRN:1:2:Claim Submitter Trace Number:R:1
-segment=STC:1:RX:Claim Level Status Information:R:1
+segment=STC:1:A2,A3,R3:Claim Level Status Information:R:1
 segment=REF:1:1K:Payer Claim Identification Number:S:1
 segment=REF:1:BLT:Institutional Bill Type Identification:S:1
-segment=REF:1:EJ:Patient Control Number:S:1
+segment=REF:1:EJ,EA:Patient Control Number:S:1
 segment=REF:1:XZ:Pharmacy Prescription:S:1
 segment=REF:1:VV:Voucher Identifier:S:1
 segment=DTP:1:472:Claim Service Date:S:1
